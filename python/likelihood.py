@@ -1,8 +1,8 @@
 import numpy as np
-from plik_cmbonly import plik_lite
+from plik_lite import plik_lite
 
 
-def logprob(values, names, prior_bound_dict, prior_gaussian_dict, like_obj, class_obj, class_param_dict, model):
+def logprob(values, names, prior_bound_dict, prior_gaussian_dict, like_obj, class_param_dict, model):
     '''
     values - an array the length of names (things that are varying)
     names - a list of parameter names in the same order as theta_p
@@ -24,7 +24,7 @@ def logprob(values, names, prior_bound_dict, prior_gaussian_dict, like_obj, clas
     #print('dictionary for CLASS', thetas)
 
     ELLMIN=1
-    Dltt, Dlee, Dlte=model(thetas, class_obj, ELLMIN)
+    Dltt, Dlee, Dlte=model(thetas, ELLMIN)
     ls = np.arange(Dltt.shape[0]+ELLMIN)[ELLMIN:]
 
     ll = like_obj.loglike(ls, Dltt, Dlte, Dlee, ELLMIN)

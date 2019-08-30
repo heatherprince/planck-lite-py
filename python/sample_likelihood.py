@@ -7,7 +7,7 @@ import emcee
 print(emcee.__version__)
 
 import read_inifiles
-from plik_cmbonly import plik_lite
+from plik_lite import plik_lite
 import likelihood
 import cmb_power
 
@@ -64,10 +64,9 @@ class SampleLikelihood():
 
         model = cmb_power.get_theoretical_TT_TE_EE_unbinned_power_spec_D_ell
 
-        class_obj = Class()
         self.sampler = emcee.EnsembleSampler(nwalkers, ndim, logprob_fn,
             args=(params_to_sample, prior_bounds, prior_gaussian, like_obj,
-                    class_obj, class_basic_dict, model), backend=backend)
+                    class_basic_dict, model), backend=backend)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # things for running emcee - - - - - - - - - - - - - - - - - - - - - -
@@ -86,11 +85,8 @@ class SampleLikelihood():
         # to test timing of logprob:
         self.pos0=list(start_vals.values())
         self.args=(params_to_sample, prior_bounds, prior_gaussian, like_obj,
-                class_obj, class_basic_dict, model)
+                class_basic_dict, model)
         self.logprob_fn=logprob_fn
-
-        class_obj.struct_cleanup()
-        class_obj.empty()
 
     def sample(self):
         pos=self.pos

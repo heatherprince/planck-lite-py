@@ -1,10 +1,13 @@
 from classy import Class
 import numpy as np
 
-def get_theoretical_TT_unbinned_power_spec_C_ell(class_params, cosmo, ellmin=2, ellmax=2508, T_cmb=2.7255):
+def get_theoretical_TT_unbinned_power_spec_C_ell(class_params, ellmin=2, ellmax=2508, T_cmb=2.7255):
+    cosmo = Class()
     cosmo.set(class_params)
     cosmo.compute()
     cls = cosmo.lensed_cl(3000)
+    cosmo.struct_cleanup()
+    cosmo.empty()
 
     #get in units of microkelvin squared
     T_fac=(T_cmb*1e6)**2
@@ -12,10 +15,13 @@ def get_theoretical_TT_unbinned_power_spec_C_ell(class_params, cosmo, ellmin=2, 
     Cltt=(T_fac*cls['tt'])[ellmin:ellmax+1]
     return Cltt
 
-def get_theoretical_TT_TE_EE_unbinned_power_spec_D_ell(class_params, cosmo, ellmin=2, ellmax=2508, T_cmb=2.7255):
+def get_theoretical_TT_TE_EE_unbinned_power_spec_D_ell(class_params, ellmin=2, ellmax=2508, T_cmb=2.7255):
+    cosmo = Class()
     cosmo.set(class_params)
     cosmo.compute()
     cls = cosmo.lensed_cl(3000)
+    cosmo.struct_cleanup()
+    cosmo.empty()
 
     #get in units of microkelvin squared
     T_fac=(T_cmb*1e6)**2

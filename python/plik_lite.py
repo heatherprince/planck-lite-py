@@ -12,7 +12,7 @@ SHOW_PLOTS=False
 
 #make it a class so that objects can be initialised once easily?
 class plik_lite:
-    def __init__(self, use_low_ell_bins=False):
+    def __init__(self, year=2015, spectra='TT', use_low_ell_bins=False):
         self.use_low_ell_bins=use_low_ell_bins #False matches Plik_lite - just l<=30
         if self.use_low_ell_bins:
             self.nbintt_low_ell=2
@@ -24,10 +24,21 @@ class plik_lite:
         self.plmax=2508
         self.calPlanck=1
 
-        self.data_dir='../cmb_data/planck2015_plik_lite/'
-        self.use_tt=True
-        self.use_ee=False
-        self.use_te=False
+        if year==2015:
+            self.data_dir='../cmb_data/planck2015_plik_lite/'
+            version=18
+        elif year==2018:
+            self.data_dir='../cmb_data/planck2018_plik_lite/'
+            version=22
+
+        if spectra=='TT':
+            self.use_tt=True
+            self.use_ee=False
+            self.use_te=False
+        elif spectra=='TTTEEE':
+            self.use_tt=True
+            self.use_ee=True
+            self.use_te=True
 
         self.nbintt_hi = 215 #30-2508   #used when getting covariance matrix
         self.nbinte = 199 #30-1996
@@ -37,8 +48,8 @@ class plik_lite:
         self.nbintt=self.nbintt_hi+self.nbintt_low_ell #mostly want this if using low ell
         self.nbin_tot=self.nbintt+self.nbinte+self.nbinee
 
-        self.like_file = self.data_dir+'cl_cmb_plik_v18.dat'
-        self.cov_file  = self.data_dir+'c_matrix_plik_v18.dat'
+        self.like_file = self.data_dir+'cl_cmb_plik_v'+str(version)+'.dat'
+        self.cov_file  = self.data_dir+'c_matrix_plik_v'+str(version)+'.dat'
         self.blmin_file = self.data_dir+'blmin.dat'
         self.blmax_file = self.data_dir+'blmax.dat'
         self.binw_file = self.data_dir+'bweight.dat'
@@ -51,8 +62,8 @@ class plik_lite:
         self.bin_w=np.loadtxt(self.binw_file)
 
         if self.use_low_ell_bins:
-            self.data_dir_low_ell='../cmb_data/planck2015_low_ell/'
-            self.bval_low_ell, self.X_data_low_ell, self.X_sig_low_ell=np.genfromtxt(self.data_dir_low_ell+'CTT_bin_low_ell.dat', unpack=True)
+            self.data_dir_low_ell='../cmb_data/planck'+str(year)+'_low_ell/'
+            self.bval_low_ell, self.X_data_low_ell, self.X_sig_low_ell=np.genfromtxt(self.data_dir_low_ell+'CTT_bin_low_ell_'+str(year)+'.dat', unpack=True)
             self.blmin_low_ell=np.loadtxt(self.data_dir_low_ell+'blmin_low_ell.dat').astype(int)
             self.blmax_low_ell=np.loadtxt(self.data_dir_low_ell+'blmax_low_ell.dat').astype(int)
             self.bin_w_low_ell=np.loadtxt(self.data_dir_low_ell+'bweight_low_ell.dat')
@@ -156,7 +167,7 @@ class plik_lite:
         Clee=Dlee/fac
 
 
-        #indexing here is a bit odd. need to subtract 1 to use 0 indexing for cl, then add one for weights because fortran includes top value?? Check!!
+        #indexing here is a bit odd. need to subtract 1 to use 0 indexing for cl, then add one for weights because fortran includes top value
         #how does it work in fortran when i=1 and blmin(i)=0?
         Cltt_bin=np.zeros(self.nbintt)
         #import IPython; IPython.embed()
@@ -220,24 +231,32 @@ class plik_lite:
 
 if __name__=='__main__':
     ELLMIN=1
-    #match cosmosis demo2
     class_dict={
             'output': 'tCl,pCl,lCl',
             'l_max_scalars': 3000,
             'lensing': 'yes',
-            'N_ur':2.03066666667, #2.046, #1 massive neutrino to match camb
+            'N_ur':2.03066666667, #2.0328 #1 massive neutrino to match camb
             'N_ncdm': 1,
             'omega_ncdm' : 0.0006451439,
+            # 'm_ncdm': 0.06,
             'non linear' : 'halofit',
             'YHe':0.245341 }
-    theta={"h":0.6731, "omega_b":0.02222, "omega_cdm":0.1197, "tau_reio":0.078, "A_s":2.19551118827e-09, "n_s":0.9655}
+    logA=3.089
+    A=np.exp(logA)/1e10
+    theta={"h":0.6731, "omega_b":0.02222, "omega_cdm":0.1197, "tau_reio":0.078, "A_s":A, "n_s":0.9655}
     class_dict.update(theta)
-    Dltt, Dlee, Dlte=cmb_power.get_theoretical_TT_TE_EE_unbinned_power_spec_D_ell(class_dict, ELLMIN) #is this D??
+    Dltt, Dlte, Dlee=cmb_power.get_theoretical_TT_TE_EE_unbinned_power_spec_D_ell(class_dict, ELLMIN)
     ls = np.arange(Dltt.shape[0]+ELLMIN)[ELLMIN:]
 
+    # compare high ell TT 2015 vs 2018
+    like_obj=plik_lite(year=2015)
+    print ('plik-lite-py with CMB spectra from CLASS, planck 2015 high ell temperature data: ', -1*like_obj.loglike(ls, Dltt, Dlte, Dlee))
 
-    like_obj=plik_lite()
-    print ('plik-lite-py with CMB spectra from CLASS: ', -1*like_obj.loglike(ls, Dltt, Dlte, Dlee))
+    like_obj2018=plik_lite(year=2018)
+    print ('plik-lite-py with CMB spectra from CLASS, planck 2018 high ell temperature data: ', -1*like_obj2018.loglike(ls, Dltt, Dlte, Dlee))
+
+    like_obj2018_temp_and_pol=plik_lite(year=2018, spectra='TTTEEE')
+    print ('plik-lite-py with CMB spectra from CLASS, planck 2018 high ell temperature and polarization data: ', -1*like_obj2018_temp_and_pol.loglike(ls, Dltt, Dlte, Dlee))
 
     like_obj=plik_lite(use_low_ell_bins=True)
     print ('plik-lite-py with CMB spectra from CLASS: ', -1*like_obj.loglike(ls, Dltt, Dlte, Dlee))
