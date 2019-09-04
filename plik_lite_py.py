@@ -4,10 +4,8 @@ the low-ell temperature data as two Gaussian bins
 planck calibration is set to 1 by default but this can easily be modified
 '''
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.io import FortranFile
 import scipy.linalg
-
 
 def main():
     TTTEEE2018=PlikLitePy(year=2018, spectra='TTTEEE', use_low_ell_bins=False)
