@@ -1,35 +1,46 @@
-#python version of plik-lite to check binning etc before including in cosmoped
-#Fortran to python slicing: a:b becomes a-1:b
-#used some stuff from Zack's code for the ACT likelihood (esp for reading covmat): https://github.com/xzackli/actpols2_like_py/blob/master/act_like.py
+'''
+Python version of Planck's plik-lite likelihood with the option to include
+the low-ell temperature data as two Gaussian bins
+'''
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import FortranFile
 import scipy.linalg
 
-import cmb_power
 
-SHOW_PLOTS=False
+def main():
+    TTTEEE2018=plik_lite_py(year=2018, spectra='TTTEEE', use_low_ell_bins=False)
+    TTTEEE2018.test()
 
-#make it a class so that objects can be initialised once easily?
-class plik_lite:
+    TT2018=plik_lite_py(year=2018, spectra='TT', use_low_ell_bins=False)
+    TT2018.test()
+
+
+class plik_lite_py:
     def __init__(self, year=2015, spectra='TT', use_low_ell_bins=False):
-        self.use_low_ell_bins=use_low_ell_bins #False matches Plik_lite - just l<=30
+        self.year=year
+        self.spectra=spectra
+        self.use_low_ell_bins=use_low_ell_bins #False matches Plik_lite - just l>=30
         if self.use_low_ell_bins:
             self.nbintt_low_ell=2
-            self.plmin=2
+            self.plmin_TT=2
 
         else:
             self.nbintt_low_ell=0
-            self.plmin=30
+            self.plmin_TT=30
+        self.plmin=30
         self.plmax=2508
         self.calPlanck=1
 
         if year==2015:
-            self.data_dir='../cmb_data/planck2015_plik_lite/'
+            self.data_dir='data/planck2015_plik_lite/'
             version=18
         elif year==2018:
-            self.data_dir='../cmb_data/planck2018_plik_lite/'
+            self.data_dir='data/planck2018_plik_lite/'
             version=22
+        else:
+            print('Year must be 2015 or 2018')
+            return 1
 
         if spectra=='TT':
             self.use_tt=True
@@ -39,6 +50,9 @@ class plik_lite:
             self.use_tt=True
             self.use_ee=True
             self.use_te=True
+        else:
+            print('Spectra must be TT or TTTEEE')
+            return 1
 
         self.nbintt_hi = 215 #30-2508   #used when getting covariance matrix
         self.nbinte = 199 #30-1996
@@ -62,7 +76,7 @@ class plik_lite:
         self.bin_w=np.loadtxt(self.binw_file)
 
         if self.use_low_ell_bins:
-            self.data_dir_low_ell='../cmb_data/planck'+str(year)+'_low_ell/'
+            self.data_dir_low_ell='data/planck'+str(year)+'_low_ell/'
             self.bval_low_ell, self.X_data_low_ell, self.X_sig_low_ell=np.genfromtxt(self.data_dir_low_ell+'CTT_bin_low_ell_'+str(year)+'.dat', unpack=True)
             self.blmin_low_ell=np.loadtxt(self.data_dir_low_ell+'blmin_low_ell.dat').astype(int)
             self.blmax_low_ell=np.loadtxt(self.data_dir_low_ell+'blmax_low_ell.dat').astype(int)
@@ -72,16 +86,17 @@ class plik_lite:
             self.X_data=np.concatenate((self.X_data_low_ell, self.X_data))
             self.X_sig=np.concatenate((self.X_sig_low_ell, self.X_sig))
 
-            self.blmin=np.concatenate((self.blmin_low_ell, self.blmin+len(self.bin_w_low_ell)))
-            self.blmax=np.concatenate((self.blmax_low_ell, self.blmax+len(self.bin_w_low_ell)))
-            self.bin_w=np.concatenate((self.bin_w_low_ell, self.bin_w))
+            self.blmin_TT=np.concatenate((self.blmin_low_ell, self.blmin+len(self.bin_w_low_ell)))
+            self.blmax_TT=np.concatenate((self.blmax_low_ell, self.blmax+len(self.bin_w_low_ell)))
+            self.bin_w_TT=np.concatenate((self.bin_w_low_ell, self.bin_w))
+
+        else:
+            self.blmin_TT=self.blmin
+            self.blmax_TT=self.blmax
+            self.bin_w_TT=self.bin_w
 
 
         self.fisher=self.get_inverse_covmat()
-
-        if SHOW_PLOTS:
-            plt.plot(blmin[1:]-blmin[:-1], 'o', linestyle='none')
-            plt.show()
 
     def get_inverse_covmat(self):
         #read full covmat
@@ -117,50 +132,23 @@ class plik_lite:
         else:
             print("not implemented")
 
-        if self.use_low_ell_bins:
-            print('Including low ell TT in covariance matrix')
-            bin_no += self.nbintt_low_ell
-
-            covmat_with_lo=np.zeros(shape=(bin_no, bin_no))
-            cov_lo=np.diag(self.X_sig_low_ell**2)
-            covmat_with_lo[0:self.nbintt_low_ell, 0:self.nbintt_low_ell]=cov_lo
-            covmat_with_lo[self.nbintt_low_ell:, self.nbintt_low_ell:]=cov
-
-            cov=covmat_with_lo
-
-        #invert covariance matrix (cholesky decomposition should be faster)
+        #invert high ell covariance matrix (cholesky decomposition should be faster)
         fisher=scipy.linalg.cho_solve(scipy.linalg.cho_factor(cov), np.identity(bin_no))
-        #zack transposes it (because fortran indexing works differently?) but I don't think this should make a difference? check!
         fisher=fisher.transpose()
-        if SHOW_PLOTS:
-            fisher2=np.linalg.inv(cov)
-            plt.subplot(131)
-            plt.pcolormesh(fisher)
-            plt.colorbar()
-            plt.subplot(132)
-            plt.pcolormesh(fisher2)
-            plt.colorbar()
-            plt.subplot(133)
-            plt.pcolormesh(fisher-fisher2)
-            plt.colorbar()
-            plt.show()
 
-            plt.subplot(131)
-            plt.pcolormesh(fisher)
-            plt.colorbar()
-            plt.subplot(132)
-            plt.pcolormesh(fisher.transpose())
-            plt.colorbar()
-            plt.subplot(133)
-            plt.pcolormesh(fisher-fisher.transpose())
-            plt.colorbar()
-            plt.show()
+
+        if self.use_low_ell_bins:
+            bin_no += self.nbintt_low_ell
+            inv_covmat_with_lo=np.zeros(shape=(bin_no, bin_no))
+            inv_covmat_with_lo[0:2, 0:2]=np.diag(1./self.X_sig_low_ell**2)
+            inv_covmat_with_lo[2:,2:]= fisher
+            fisher=inv_covmat_with_lo
 
         return fisher
 
-    def loglike(self, ls, Dltt, Dlte, Dlee, ellmin=1):
-        #l should start at 1 for consistency with plik_lite??
+    def loglike(self, Dltt, Dlte, Dlee, ellmin=2):
         #convert model Dl's to Cls then bin them
+        ls=np.arange(len(Dltt))+ellmin
         fac=ls*(ls+1)/(2*np.pi)
         Cltt=Dltt/fac
         Clte=Dlte/fac
@@ -168,24 +156,21 @@ class plik_lite:
 
 
         #indexing here is a bit odd. need to subtract 1 to use 0 indexing for cl, then add one for weights because fortran includes top value
+        #Fortran to python slicing: a:b becomes a-1:b
         #how does it work in fortran when i=1 and blmin(i)=0?
         Cltt_bin=np.zeros(self.nbintt)
-        #import IPython; IPython.embed()
         for i in range(self.nbintt):
-            #if i==0:
-            Cltt_bin[i]=np.sum(Cltt[self.blmin[i]+self.plmin-ellmin:self.blmax[i]+self.plmin+1-ellmin]*self.bin_w[self.blmin[i]:self.blmax[i]+1]) #what happens in Fortran when blmin is 0?
-            #else:
-            #    Cltt_bin[i]=np.sum(Cltt[self.blmin[i]+self.plmin-1:self.blmax[i]+self.plmin]*self.bin_w[self.blmin[i]-1:self.blmax[i]]) #testing!
+            Cltt_bin[i]=np.sum(Cltt[self.blmin_TT[i]+self.plmin_TT-ellmin:self.blmax_TT[i]+self.plmin_TT+1-ellmin]*self.bin_w_TT[self.blmin_TT[i]:self.blmax_TT[i]+1])
 
-        #shouldn't I be using a different part of blmin, blmax and bin_w??
+        #bin widths and weights are the same for TT, TE and EE
         Clte_bin=np.zeros(self.nbinte)
         for i in range(self.nbinte):
-            Clte_bin[i]=np.sum(Clte[self.blmin[i]+self.plmin-1:self.blmax[i]+self.plmin]*self.bin_w[self.blmin[i]:self.blmax[i]+1])
+            Clte_bin[i]=np.sum(Clte[self.blmin[i]+self.plmin-ellmin:self.blmax[i]+self.plmin+1-ellmin]*self.bin_w[self.blmin[i]:self.blmax[i]+1])
 
-        #shouldn't I be using a different part of blmin, blmax and bin_w??
+        #bin widths and weights are the same for TT, TE and EE
         Clee_bin=np.zeros(self.nbinee)
         for i in range(self.nbinee):
-            Clee_bin[i]=np.sum(Clee[self.blmin[i]+self.plmin-1:self.blmax[i]+self.plmin]*self.bin_w[self.blmin[i]:self.blmax[i]+1])
+            Clee_bin[i]=np.sum(Clee[self.blmin[i]+self.plmin-ellmin:self.blmax[i]+self.plmin+1-ellmin]*self.bin_w[self.blmin[i]:self.blmax[i]+1])
 
         X_model=np.zeros(self.nbin_tot)
         X_model[:self.nbintt]=Cltt_bin/self.calPlanck**2
@@ -220,43 +205,31 @@ class plik_lite:
         else:
             print("not implemented")
 
-        #why is -lnlike returned in plik_lite? --> WMAP convention
         return -0.5*diff_vec.dot(self.fisher.dot(diff_vec))
 
 
+    def test(self):
+        ls, Dltt, Dlte, Dlee = np.genfromtxt('data/Dl.dat', unpack=True)
+        ellmin=int(ls[0])
+        ell=np.arange(len(Dltt))+ellmin
+        print(ls, ell)
 
 
+        if self.year==2018 and self.spectra=='TTTEEE' and not self.use_low_ell_bins:
+            print('plik-lite-py likelihood for high-l TT, TE and EE')
+            print('expected: -291.33481235418003') # from Plik-lite within cobaya
+            print('plik-lite-py:',self.loglike(Dltt, Dlte, Dlee, ellmin))
+
+        if self.year==2018 and self.spectra=='TT' and not self.use_low_ell_bins:
+            print('plik-lite-py likelihood for high-l TT')
+            print('expected: -101.58123068722568') # from Plik-lite within cobaya
+            print('plik-lite-py:',self.loglike(Dltt, Dlte, Dlee, ellmin))
+
+        else:
+            print('plik-lite-py:',self.loglike(Dltt, Dlte, Dlee, ellmin))
+            print('still adding a likelihood to compare it to')
 
 
 
 if __name__=='__main__':
-    ELLMIN=1
-    class_dict={
-            'output': 'tCl,pCl,lCl',
-            'l_max_scalars': 3000,
-            'lensing': 'yes',
-            'N_ur':2.03066666667, #2.0328 #1 massive neutrino to match camb
-            'N_ncdm': 1,
-            'omega_ncdm' : 0.0006451439,
-            # 'm_ncdm': 0.06,
-            'non linear' : 'halofit',
-            'YHe':0.245341 }
-    logA=3.089
-    A=np.exp(logA)/1e10
-    theta={"h":0.6731, "omega_b":0.02222, "omega_cdm":0.1197, "tau_reio":0.078, "A_s":A, "n_s":0.9655}
-    class_dict.update(theta)
-    Dltt, Dlte, Dlee=cmb_power.get_theoretical_TT_TE_EE_unbinned_power_spec_D_ell(class_dict, ELLMIN)
-    ls = np.arange(Dltt.shape[0]+ELLMIN)[ELLMIN:]
-
-    # compare high ell TT 2015 vs 2018
-    like_obj=plik_lite(year=2015)
-    print ('plik-lite-py with CMB spectra from CLASS, planck 2015 high ell temperature data: ', -1*like_obj.loglike(ls, Dltt, Dlte, Dlee))
-
-    like_obj2018=plik_lite(year=2018)
-    print ('plik-lite-py with CMB spectra from CLASS, planck 2018 high ell temperature data: ', -1*like_obj2018.loglike(ls, Dltt, Dlte, Dlee))
-
-    like_obj2018_temp_and_pol=plik_lite(year=2018, spectra='TTTEEE')
-    print ('plik-lite-py with CMB spectra from CLASS, planck 2018 high ell temperature and polarization data: ', -1*like_obj2018_temp_and_pol.loglike(ls, Dltt, Dlte, Dlee))
-
-    like_obj=plik_lite(use_low_ell_bins=True)
-    print ('plik-lite-py with CMB spectra from CLASS: ', -1*like_obj.loglike(ls, Dltt, Dlte, Dlee))
+    main()
