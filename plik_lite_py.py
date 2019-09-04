@@ -1,6 +1,7 @@
 '''
 Python version of Planck's plik-lite likelihood with the option to include
 the low-ell temperature data as two Gaussian bins
+planck calibration is set to 1 by default but this can easily be modified
 '''
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,15 +10,20 @@ import scipy.linalg
 
 
 def main():
-    TTTEEE2018=plik_lite_py(year=2018, spectra='TTTEEE', use_low_ell_bins=False)
+    TTTEEE2018=PlikLitePy(year=2018, spectra='TTTEEE', use_low_ell_bins=False)
     TTTEEE2018.test()
 
-    TT2018=plik_lite_py(year=2018, spectra='TT', use_low_ell_bins=False)
+    TT2018=PlikLitePy(year=2018, spectra='TT', use_low_ell_bins=False)
     TT2018.test()
 
 
-class plik_lite_py:
+class PlikLitePy:
     def __init__(self, year=2015, spectra='TT', use_low_ell_bins=False):
+        '''
+        year = 2015 or 2018
+        spectra = TT or TTTEEE
+        use_low_ell_bins = True or False (refers to low-ell temperature bins)
+        '''
         self.year=year
         self.spectra=spectra
         self.use_low_ell_bins=use_low_ell_bins #False matches Plik_lite - just l>=30
@@ -211,9 +217,6 @@ class plik_lite_py:
     def test(self):
         ls, Dltt, Dlte, Dlee = np.genfromtxt('data/Dl.dat', unpack=True)
         ellmin=int(ls[0])
-        ell=np.arange(len(Dltt))+ellmin
-        print(ls, ell)
-
 
         if self.year==2018 and self.spectra=='TTTEEE' and not self.use_low_ell_bins:
             print('plik-lite-py likelihood for high-l TT, TE and EE')
