@@ -12,7 +12,7 @@ coming soon
 
 # please cite
 
-[*Planck* 2015 likelihood paper](https://www.aanda.org/articles/aa/abs/2016/10/aa26926-15/aa26926-15.html) because the high ell plik-lite-py code is based on the public *Planck* plik-lite likelihood code and the datafiles belong to *Planck*.
+[*Planck* 2018 likelihood paper](https://arxiv.org/abs/1907.12875) or [*Planck* 2015 likelihood paper](https://www.aanda.org/articles/aa/abs/2016/10/aa26926-15/aa26926-15.html) ([arXiv version](https://arxiv.org/abs/1507.02704)) depending on which data you use, because the high ell Planck-lite-py code is based on the public *Planck* plik-lite likelihood code and the datafiles belong to *Planck*.
 
 Our paper: arXiv link coming soon
 
