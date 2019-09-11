@@ -8,14 +8,14 @@ from scipy.io import FortranFile
 import scipy.linalg
 
 def main():
-    TTTEEE2018=PlikLitePy(year=2018, spectra='TTTEEE', use_low_ell_bins=False)
+    TTTEEE2018=PlanckLitePy(year=2018, spectra='TTTEEE', use_low_ell_bins=False)
     TTTEEE2018.test()
 
-    TT2018=PlikLitePy(year=2018, spectra='TT', use_low_ell_bins=False)
+    TT2018=PlanckLitePy(year=2018, spectra='TT', use_low_ell_bins=False)
     TT2018.test()
 
 
-class PlikLitePy:
+class PlanckLitePy:
     def __init__(self, data_directory='data', year=2015, spectra='TT', use_low_ell_bins=False):
         '''
         year = 2015 or 2018
@@ -217,17 +217,17 @@ class PlikLitePy:
         ellmin=int(ls[0])
 
         if self.year==2018 and self.spectra=='TTTEEE' and not self.use_low_ell_bins:
-            print('plik-lite-py likelihood for high-l TT, TE and EE')
+            print('Planck-lite-py likelihood for high-l TT, TE and EE')
             print('expected: -291.33481235418003') # from Plik-lite within cobaya
 
         if self.year==2018 and self.spectra=='TT' and not self.use_low_ell_bins:
-            print('plik-lite-py likelihood for high-l TT')
+            print('Planck-lite-py likelihood for high-l TT')
             print('expected: -101.58123068722568') # from Plik-lite within cobaya
 
         else:
             print('still adding a likelihood to compare it to')
 
-        print('plik-lite-py:',self.loglike(Dltt, Dlte, Dlee, ellmin))
+        print('Planck-lite-py:',self.loglike(Dltt, Dlte, Dlee, ellmin))
 
 
 
