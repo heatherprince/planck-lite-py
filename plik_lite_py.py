@@ -1,6 +1,6 @@
 '''
 Python version of Planck's plik-lite likelihood with the option to include
-the low-ell temperature data as two Gaussian bins
+the low-ell temperature as two Gaussian bins
 planck calibration is set to 1 by default but this can easily be modified
 '''
 import numpy as np
@@ -16,7 +16,7 @@ def main():
 
 
 class PlikLitePy:
-    def __init__(self, year=2015, spectra='TT', use_low_ell_bins=False):
+    def __init__(self, data_directory='data', year=2015, spectra='TT', use_low_ell_bins=False):
         '''
         year = 2015 or 2018
         spectra = TT or TTTEEE
@@ -37,10 +37,10 @@ class PlikLitePy:
         self.calPlanck=1
 
         if year==2015:
-            self.data_dir='data/planck2015_plik_lite/'
+            self.data_dir=data_directory+'/planck2015_plik_lite/'
             version=18
         elif year==2018:
-            self.data_dir='data/planck2018_plik_lite/'
+            self.data_dir=data_directory+'/planck2018_plik_lite/'
             version=22
         else:
             print('Year must be 2015 or 2018')
@@ -219,16 +219,15 @@ class PlikLitePy:
         if self.year==2018 and self.spectra=='TTTEEE' and not self.use_low_ell_bins:
             print('plik-lite-py likelihood for high-l TT, TE and EE')
             print('expected: -291.33481235418003') # from Plik-lite within cobaya
-            print('plik-lite-py:',self.loglike(Dltt, Dlte, Dlee, ellmin))
 
         if self.year==2018 and self.spectra=='TT' and not self.use_low_ell_bins:
             print('plik-lite-py likelihood for high-l TT')
             print('expected: -101.58123068722568') # from Plik-lite within cobaya
-            print('plik-lite-py:',self.loglike(Dltt, Dlte, Dlee, ellmin))
 
         else:
-            print('plik-lite-py:',self.loglike(Dltt, Dlte, Dlee, ellmin))
             print('still adding a likelihood to compare it to')
+
+        print('plik-lite-py:',self.loglike(Dltt, Dlte, Dlee, ellmin))
 
 
 
