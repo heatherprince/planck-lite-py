@@ -18,7 +18,7 @@ print('Test 1: high-l (l>=30) temperature only (TT) \n')
 TT2018=PlanckLitePy(data_directory='data', year=2018, spectra='TT', use_low_ell_bins=False)
 
 # call the likelihood function
-loglike=TT2018.loglike(Dltt, Dlte, Dlee, ellmin) #ellmin = 2 by default
+loglike=TT2018.loglike(Dltt, Dlte, Dlee, ellmin)
 expected=-101.58123068722583
 print('Planck-lite-py log likelihood:', loglike)
 print('Expected log likelihood:', expected)
