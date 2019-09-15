@@ -17,7 +17,7 @@ from planck_lite_py import PlanckLitePy
 # create a PlanckLitePy object
 TT2018 = PlanckLitePy(data_directory='data', year=2018, spectra='TT', use_low_ell_bins=False)
 
-# call the log likelihood function with TT, TE and EE spectra
+# call the log likelihood function with your theoretical TT, TE, and EE spectra (from e.g. CLASS or CAMB)
 loglike=TT2018.loglike(Dltt, Dlte, Dlee, ellmin) 
 ```
 
