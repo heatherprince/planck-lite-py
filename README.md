@@ -10,7 +10,27 @@ Note, a Python implementation of the plik-lite part also exists in Cobaya ('plan
 
 # usage
 
-see planck_lite_py_example.py
+```python
+# import the PlanckLitePy class
+from planck_lite_py import PlanckLitePy
+
+# create a PlanckLitePy object
+TT2018 = PlanckLitePy(data_directory='data', year=2018, spectra='TT', use_low_ell_bins=False)
+
+# call the log likelihood function with TT, TE and EE spectra
+loglike=TT2018.loglike(Dltt, Dlte, Dlee, ellmin) 
+```
+
+When initializing the PlanckLitePy object you can specify:
+* path: from where you are running the code to the data directories
+* year: 2015 or 2018 to use the *Planck* 2015 or 2018 data releases
+* spectra: 'TT' for just temperature, or 'TTTEEE' for TT, TE and EE spectra
+* use_low_ell: True to use two low-l temperature bins, False to use just l>=30 data
+
+Notes on the PlanckLitePy log likelihood function:
+* the log likelihood function expects the spectra in the form D=l(l+1)/2&pi; C 
+* Dltt, Dlte and Dlee should all cover the same l range, usually from a minimum l value of 0 or 2
+* ellmin=2 by default; if your spectra start at l=0 then specify this with ellmin=0
 
 # please cite
 
