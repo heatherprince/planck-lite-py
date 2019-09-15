@@ -4,11 +4,11 @@ A Python implementation of *Planck*'s plik-lite code (see the [*Planck* 2015 lik
 
 Note, a Python implementation of the plik-lite part also exists in the Cobaya sampling code ('planck_2018_highl_plik.[TT|TTTEEE]_lite_native'), see https://cobaya.readthedocs.io/en/latest/likelihood_planck.html
 
-# required packages
+# Required packages
 * numpy
 * scipy 
 
-# usage
+# Usage
 1. import the PlanckLitePy class
 ```python
 from planck_lite_py import PlanckLitePy
@@ -31,7 +31,7 @@ Notes on the PlanckLitePy log likelihood function:
 * Dltt, Dlte and Dlee should all cover the same l range, usually from a minimum l value of 0 or 2
 * ellmin=2 by default; if your spectra start at l=0 then specify this with ellmin=0
 
-# please cite
+# Please cite
 
 [*Planck* 2018 likelihood paper](https://arxiv.org/abs/1907.12875) or [*Planck* 2015 likelihood paper](https://www.aanda.org/articles/aa/abs/2016/10/aa26926-15/aa26926-15.html) ([arXiv version](https://arxiv.org/abs/1507.02704)) depending on which data you use, because the high ell Planck-lite-py code is based on the public *Planck* plik-lite likelihood code and the datafiles belong to *Planck*.
 
