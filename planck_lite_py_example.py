@@ -1,5 +1,6 @@
 '''
 Planck-lite-py example usage for Planck 2018 likelihoods
+to use 2015 data, replace year=2018 with year=2015 when creating a PlanckLitePy object
 '''
 import numpy as np
 from planck_lite_py import PlanckLitePy
