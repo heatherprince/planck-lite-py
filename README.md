@@ -1,6 +1,6 @@
 # Planck-lite-py
 
-A Python implementation of *Planck*'s plik-lite code (see the [*Planck* 2015 likelihood paper](https://www.aanda.org/articles/aa/abs/2016/10/aa26926-15/aa26926-15.html) or the [arXiv version](https://arxiv.org/abs/1507.02704), and the [*Planck* 2018 likelihood paper](https://arxiv.org/abs/1907.12875)) with the option of including two approximately Gaussian low-l temperature bins to replace the temperature low-l likelihood. Includes 2015 data and 2018 data as options. 
+A Python implementation of *Planck*'s plik-lite code (see the [*Planck* 2015 likelihood paper](https://www.aanda.org/articles/aa/abs/2016/10/aa26926-15/aa26926-15.html) or the [arXiv version](https://arxiv.org/abs/1507.02704), and the [*Planck* 2018 likelihood paper](https://arxiv.org/abs/1907.12875)) with the option of including two approximately Gaussian low-l temperature bins to replace the temperature low-l likelihood. Includes 2015 data and 2018 data as options (these data come from the [Planck Legacy Archive](https://pla.esac.esa.int/#cosmology)). 
 
 Note, a Python implementation of the plik-lite part also exists in the Cobaya sampling code ('planck_2018_highl_plik.[TT|TTTEEE]_lite_native'), see https://cobaya.readthedocs.io/en/latest/likelihood_planck.html
 
