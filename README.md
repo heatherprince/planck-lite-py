@@ -28,7 +28,7 @@ When initializing the PlanckLitePy object you can specify:
 * use_low_ell: True to use two low-l temperature bins, False to use just l>=30 data
 
 Notes on the PlanckLitePy log likelihood function:
-* the log likelihood function expects the spectra in the form D=l(l+1)/2&pi; C 
+* the log likelihood function expects the spectra in the form D<sub>l</sub>=l(l+1)/2&pi; C<sub>l</sub> 
 * Dltt, Dlte and Dlee should all cover the same l range, usually from a minimum l value of 0 or 2
 * ellmin=2 by default; if your spectra start at l=0 then specify this with ellmin=0
 
