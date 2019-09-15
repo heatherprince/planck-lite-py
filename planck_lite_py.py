@@ -1,6 +1,15 @@
 '''
 Python version of Planck's plik-lite likelihood with the option to include
 the low-ell temperature as two Gaussian bins
+
+The official Planck likelihoods are availabe at https://pla.esac.esa.int/
+The papers describing the Planck likelihoods are
+Planck 2018: https://arxiv.org/abs/1907.12875
+Planck 2015: https://arxiv.org/abs/1507.02704
+
+The covariance matrix treatment is based on Zack Li's ACT likelihood code
+available at: https://github.com/xzackli/actpols2_like_py
+
 planck calibration is set to 1 by default but this can easily be modified
 '''
 import numpy as np
@@ -11,16 +20,26 @@ def main():
     TTTEEE2018=PlanckLitePy(year=2018, spectra='TTTEEE', use_low_ell_bins=False)
     TTTEEE2018.test()
 
+    TTTEEE2018_lowTTbins=PlanckLitePy(year=2018, spectra='TTTEEE', use_low_ell_bins=True)
+    TTTEEE2018_lowTTbins.test()
+
     TT2018=PlanckLitePy(year=2018, spectra='TT', use_low_ell_bins=False)
     TT2018.test()
 
+    TT2018_lowTTbins=PlanckLitePy(year=2018, spectra='TT', use_low_ell_bins=True)
+    TT2018_lowTTbins.test()
+
 
 class PlanckLitePy:
-    def __init__(self, data_directory='data', year=2015, spectra='TT', use_low_ell_bins=False):
+    def __init__(self, data_directory='data', year=2018, spectra='TT', use_low_ell_bins=False):
         '''
+        data_directory = path from where you are running this to the folder
+          containing the planck2015/8_low_ell and planck2015/8_plik_lite data
         year = 2015 or 2018
-        spectra = TT or TTTEEE
-        use_low_ell_bins = True or False (refers to low-ell temperature bins)
+        spectra = TT for just temperature or TTTEEE for temperature (TT),
+          E mode (EE) and cross (TE) spectra
+        use_low_ell_bins = True to use 2 low ell bins for the TT 2<=ell<30 data
+          or False to only use ell>=30
         '''
         self.year=year
         self.spectra=spectra
@@ -73,7 +92,7 @@ class PlanckLitePy:
         self.binw_file = self.data_dir+'bweight.dat'
 
         # read in binned ell value, C(l) TT, TE and EE and errors
-        # use_tt etc to slice? when should this happen?
+        # use_tt etc to select relevant parts
         self.bval, self.X_data, self.X_sig=np.genfromtxt(self.like_file, unpack=True)
         self.blmin=np.loadtxt(self.blmin_file).astype(int)
         self.blmax=np.loadtxt(self.blmax_file).astype(int)
@@ -159,19 +178,19 @@ class PlanckLitePy:
         Clee=Dlee/fac
 
 
-        #indexing here is a bit odd. need to subtract 1 to use 0 indexing for cl, then add one for weights because fortran includes top value
-        #Fortran to python slicing: a:b becomes a-1:b
-        #how does it work in fortran when i=1 and blmin(i)=0?
+        # Fortran to python slicing: a:b becomes a-1:b
+        # need to subtract 1 to use 0 indexing for cl,
+        # then add one for weights because fortran includes top value
         Cltt_bin=np.zeros(self.nbintt)
         for i in range(self.nbintt):
             Cltt_bin[i]=np.sum(Cltt[self.blmin_TT[i]+self.plmin_TT-ellmin:self.blmax_TT[i]+self.plmin_TT+1-ellmin]*self.bin_w_TT[self.blmin_TT[i]:self.blmax_TT[i]+1])
 
-        #bin widths and weights are the same for TT, TE and EE
+        # bin widths and weights are the same for TT, TE and EE
         Clte_bin=np.zeros(self.nbinte)
         for i in range(self.nbinte):
             Clte_bin[i]=np.sum(Clte[self.blmin[i]+self.plmin-ellmin:self.blmax[i]+self.plmin+1-ellmin]*self.bin_w[self.blmin[i]:self.blmax[i]+1])
 
-        #bin widths and weights are the same for TT, TE and EE
+        # bin widths and weights are the same for TT, TE and EE
         Clee_bin=np.zeros(self.nbinee)
         for i in range(self.nbinee):
             Clee_bin[i]=np.sum(Clee[self.blmin[i]+self.plmin-ellmin:self.blmax[i]+self.plmin+1-ellmin]*self.bin_w[self.blmin[i]:self.blmax[i]+1])
@@ -213,21 +232,49 @@ class PlanckLitePy:
 
 
     def test(self):
-        ls, Dltt, Dlte, Dlee = np.genfromtxt('data/Dl.dat', unpack=True)
+        ls, Dltt, Dlte, Dlee = np.genfromtxt('data/Dl_planck2015fit.dat', unpack=True)
         ellmin=int(ls[0])
+        loglikelihood=self.loglike(Dltt, Dlte, Dlee, ellmin)
 
         if self.year==2018 and self.spectra=='TTTEEE' and not self.use_low_ell_bins:
-            print('Planck-lite-py likelihood for high-l TT, TE and EE')
-            print('expected: -291.33481235418003') # from Plik-lite within cobaya
+            print('Log likelihood for 2018 high-l TT, TE and EE:')
+            expected = -291.33481235418026
+            # Plik-lite within cobaya gives  -291.33481235418003
+        elif self.year==2018 and self.spectra=='TTTEEE' and self.use_low_ell_bins:
+            print('Log likelihood for 2018 high-l TT, TE and EE + low-l TT bins:')
+            expected = -293.95586501795134
+        elif self.year==2018 and self.spectra=='TT' and not self.use_low_ell_bins:
+            print('Log likelihood for 2018 high-l TT:')
+            expected = -101.58123068722583
+            #Plik-lite within cobaya gives -101.58123068722568
+        elif self.year==2018 and self.spectra=='TT' and self.use_low_ell_bins:
+            print('Log likelihood for 2018 high-l TT + low-l TT bins:')
+            expected = -104.20228335099686
 
-        if self.year==2018 and self.spectra=='TT' and not self.use_low_ell_bins:
-            print('Planck-lite-py likelihood for high-l TT')
-            print('expected: -101.58123068722568') # from Plik-lite within cobaya
+        elif self.year==2015 and self.spectra=='TTTEEE' and not self.use_low_ell_bins:
+            print('NB: Don\'t use 2015 polarization!')
+            print('Log likelihood for 2015 high-l TT, TE and EE:')
+            expected = -280.9388125627618
+            # Plik-lite within cobaya gives  -291.33481235418003
+        elif self.year==2015 and self.spectra=='TTTEEE' and self.use_low_ell_bins:
+            print('NB: Don\'t use 2015 polarization!')
+            print('Log likelihood for 2015 high-l TT, TE and EE + low-l TT bins:')
+            expected = -283.1905700256343
+        elif self.year==2015 and self.spectra=='TT' and not self.use_low_ell_bins:
+            print('Log likelihood for 2015 high-l TT:')
+            expected = -102.34403873289027
+            #Plik-lite within cobaya gives -101.58123068722568
+        elif self.year==2015 and self.spectra=='TT' and self.use_low_ell_bins:
+            print('Log likelihood for 2015 high-l TT + low-l TT bins:')
+            expected = -104.59579619576277
 
         else:
-            print('still adding a likelihood to compare it to')
+            expected=None
 
-        print('Planck-lite-py:',self.loglike(Dltt, Dlte, Dlee, ellmin))
+        print('Planck-lite-py:',loglikelihood)
+        if(expected):
+            print('expected:', expected)
+            print('difference:', loglikelihood-expected, '\n')
 
 
 
