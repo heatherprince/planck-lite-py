@@ -44,10 +44,10 @@ class PlanckLitePy:
         self.year=year
         self.spectra=spectra
         self.use_low_ell_bins=use_low_ell_bins #False matches Plik_lite - just l>=30
+
         if self.use_low_ell_bins:
             self.nbintt_low_ell=2
             self.plmin_TT=2
-
         else:
             self.nbintt_low_ell=0
             self.plmin_TT=30
@@ -99,7 +99,7 @@ class PlanckLitePy:
         self.bin_w=np.loadtxt(self.binw_file)
 
         if self.use_low_ell_bins:
-            self.data_dir_low_ell='data/planck'+str(year)+'_low_ell/'
+            self.data_dir_low_ell=data_directory+'/planck'+str(year)+'_low_ell/'
             self.bval_low_ell, self.X_data_low_ell, self.X_sig_low_ell=np.genfromtxt(self.data_dir_low_ell+'CTT_bin_low_ell_'+str(year)+'.dat', unpack=True)
             self.blmin_low_ell=np.loadtxt(self.data_dir_low_ell+'blmin_low_ell.dat').astype(int)
             self.blmax_low_ell=np.loadtxt(self.data_dir_low_ell+'blmax_low_ell.dat').astype(int)
@@ -267,7 +267,6 @@ class PlanckLitePy:
         elif self.year==2015 and self.spectra=='TT' and self.use_low_ell_bins:
             print('Log likelihood for 2015 high-l TT + low-l TT bins:')
             expected = -104.59579619576277
-
         else:
             expected=None
 
